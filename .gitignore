@@ -1,0 +1,5 @@
+#忽略idea 开发文件
+.idea/
+*.iml
+#忽略编译文件
+target/
