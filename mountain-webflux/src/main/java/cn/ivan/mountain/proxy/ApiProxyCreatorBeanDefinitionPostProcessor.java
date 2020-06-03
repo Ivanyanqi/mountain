@@ -8,13 +8,12 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 
 /**
  * @author yanqi
  * @date 2020-06-04 04:17
  */
-@Component
 @Slf4j
 public class ApiProxyCreatorBeanDefinitionPostProcessor implements BeanDefinitionRegistryPostProcessor {
 
@@ -25,7 +24,7 @@ public class ApiProxyCreatorBeanDefinitionPostProcessor implements BeanDefinitio
         log.info("=======regiest");
         BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.rootBeanDefinition(JdkApiProxyCreator.class);
         AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
-        registry.registerBeanDefinition(beanDefinition.getBeanClassName(),beanDefinition);
+        registry.registerBeanDefinition(AnnotationBeanNameGenerator.INSTANCE.generateBeanName(beanDefinition,registry),beanDefinition);
 
 
     }

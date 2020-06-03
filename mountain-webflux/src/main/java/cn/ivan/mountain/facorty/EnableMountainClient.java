@@ -1,5 +1,6 @@
 package cn.ivan.mountain.facorty;
 
+import cn.ivan.mountain.proxy.ProxyType;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 
@@ -21,4 +22,6 @@ public @interface EnableMountainClient {
 
     @AliasFor("value")
     String[] basePackage() default {};
+
+    ProxyType proxyType() default ProxyType.JDK;
 }

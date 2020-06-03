@@ -1,6 +1,8 @@
 package cn.ivan.mountain.facorty;
 
 import cn.ivan.mountain.proxy.ApiProxyCreator;
+import cn.ivan.mountain.proxy.ApiProxyCreatorBeanDefinitionPostProcessor;
+import cn.ivan.mountain.proxy.ProxyType;
 import cn.ivan.mountain.proxy.impl.JdkApiProxyCreator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -8,11 +10,14 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.env.Environment;
@@ -57,6 +62,11 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
         log.info("======{}",annoAttrs);
         String[] basePackages = annoAttrs.getStringArray("basePackage");
         log.info("======{}", Arrays.toString(basePackages));
+        ProxyType proxyType = annoAttrs.getEnum("proxyType");
+        AbstractBeanDefinition prxoyBeanDefinition = BeanDefinitionBuilder.rootBeanDefinition(proxyType.getProxyClass()).getBeanDefinition();
+        String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(prxoyBeanDefinition, registry);
+        log.info("beanName{}", beanName);
+        registry.registerBeanDefinition(beanName,prxoyBeanDefinition);
         AnnotationScanner scanner = new AnnotationScanner(registry);
         scanner.doScan(basePackages).forEach(beanDefinitionHolder -> {
             log.info(beanDefinitionHolder.getBeanName());
@@ -69,8 +79,6 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
                 log.error(e.getMessage(),e);
             }
         });
-
-
     }
 
     @Override
