@@ -3,3 +3,4 @@
 *.iml
 #忽略编译文件
 target/
+*.log
