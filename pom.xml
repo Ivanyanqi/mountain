@@ -8,6 +8,8 @@
     <groupId>com.ivan</groupId>
     <artifactId>mountain</artifactId>
     <version>1.0.0</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+
+
 
 </project>
