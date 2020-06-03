@@ -10,6 +10,7 @@
     <version>1.0.0</version>
     <modules>
         <module>mountain-webflux</module>
+        <module>mountain-test</module>
     </modules>
     <packaging>pom</packaging>
 
