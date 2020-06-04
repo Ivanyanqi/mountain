@@ -118,7 +118,6 @@ public class MethodMetadataBuilder {
      * 获取 http 请求方法
      *
      * @param annotations 方法上的所有注解
-     * @return {@link HttpMethod}
      */
     private void setHttpMethodAndUri(Annotation[] annotations, MethodMetadata methodMetadata) {
         Arrays.stream(annotations).filter(this::isRequestAnnotation).findFirst().ifPresent(annotation -> {

@@ -1,30 +1,24 @@
 package cn.ivan.mountain.facorty;
 
 import cn.ivan.mountain.proxy.ApiProxyCreator;
-import cn.ivan.mountain.proxy.ApiProxyCreatorBeanDefinitionPostProcessor;
-import cn.ivan.mountain.proxy.ProxyType;
-import cn.ivan.mountain.proxy.impl.JdkApiProxyCreator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.util.ClassUtils;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * @author yanqi69
@@ -35,7 +29,6 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
 
 
     private DefaultListableBeanFactory beanFactory;
-
 
     /**
      * Register bean definitions as necessary based on the given annotation metadata of
@@ -50,39 +43,63 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
      */
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        AnnotationAttributes annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(EnableMountainClient.class.getName()));
-        log.info("======{}",annoAttrs);
-        if(annoAttrs == null){
-            annoAttrs = AnnotationAttributes.fromMap(importingClassMetadata.getAnnotationAttributes(ComponentScan.class.getName()));
+        // 获取注解属性
+        AnnotationAttributes annotationAttributes = Objects.requireNonNull(AnnotationAttributes.fromMap(
+                importingClassMetadata.getAnnotationAttributes(EnableMountainClient.class.getName())),
+                "must given proxyClass extends ApiProxyCreator");
+
+        // 扫描的包
+        String[] basePackages = annotationAttributes.getStringArray("basePackage");
+        if (basePackages.length == 0) {
+            basePackages = new String[]{ClassUtils.getPackageName(importingClassMetadata.getClassName())};
         }
-        if(annoAttrs == null){
-            log.error("need basePackage");
-            throw new RuntimeException("need basePackage");
-        }
-        log.info("======{}",annoAttrs);
-        String[] basePackages = annoAttrs.getStringArray("basePackage");
-        log.info("======{}", Arrays.toString(basePackages));
-        ProxyType proxyType = annoAttrs.getEnum("proxyType");
-        AbstractBeanDefinition prxoyBeanDefinition = BeanDefinitionBuilder.rootBeanDefinition(proxyType.getProxyClass()).getBeanDefinition();
-        String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(prxoyBeanDefinition, registry);
-        log.info("beanName{}", beanName);
-        registry.registerBeanDefinition(beanName,prxoyBeanDefinition);
+        log.debug("scanner annotation MountainClient basePackages :{}", Arrays.toString(basePackages));
+
+        // 获取代理类生成实现
+        ApiProxyCreator apiProxyCreator = this.apiProxyCreator(annotationAttributes, registry);
+
+        // 扫描特定注解 (MountainClient)
         AnnotationScanner scanner = new AnnotationScanner(registry);
         scanner.doScan(basePackages).forEach(beanDefinitionHolder -> {
-            log.info(beanDefinitionHolder.getBeanName());
             BeanDefinition beanDefinition = beanDefinitionHolder.getBeanDefinition();
-            log.info(beanDefinition.getBeanClassName());
+            log.debug(beanDefinition.getBeanClassName());
             try {
-                ApiProxyCreator apiProxyCreator = beanFactory.getBean(ApiProxyCreator.class);
-                beanFactory.registerSingleton(beanDefinitionHolder.getBeanName(),apiProxyCreator.creator(Class.forName(beanDefinition.getBeanClassName())));
+                // 为接口生成代理类
+                Class<?> aClass = Class.forName(beanDefinition.getBeanClassName());
+                beanFactory.registerSingleton(beanDefinitionHolder.getBeanName(), apiProxyCreator.creator(aClass));
+                log.debug("registerSingleton bean complete : {}", aClass);
             } catch (ClassNotFoundException e) {
-                log.error(e.getMessage(),e);
+                log.error(e.getMessage(), e);
             }
         });
     }
 
+    /**
+     * 获取代理生成类
+     *
+     * @param annotationAttributes annotation metadata of the importing class
+     * @param registry             current bean definition registry
+     * @return {@link ApiProxyCreator}
+     */
+    private ApiProxyCreator apiProxyCreator(AnnotationAttributes annotationAttributes, BeanDefinitionRegistry registry) {
+        // 获取代理类生成实现
+        ApiProxyCreator apiProxyCreator;
+        try {
+            apiProxyCreator = beanFactory.getBean(ApiProxyCreator.class);
+        } catch (NoSuchBeanDefinitionException e) {
+            log.info("init default apiProxyCreator");
+            Class<? extends ApiProxyCreator> proxyClass = annotationAttributes.getClass("proxyClass");
+            log.debug("default apiProxyCreator class is {}", proxyClass.getName());
+            AbstractBeanDefinition proxyBeanDefinition = BeanDefinitionBuilder.rootBeanDefinition(proxyClass).getBeanDefinition();
+            String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(proxyBeanDefinition, registry);
+            registry.registerBeanDefinition(beanName, proxyBeanDefinition);
+            apiProxyCreator = beanFactory.getBean(ApiProxyCreator.class);
+        }
+        return apiProxyCreator;
+    }
+
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = (DefaultListableBeanFactory)beanFactory;
+        this.beanFactory = (DefaultListableBeanFactory) beanFactory;
     }
 }

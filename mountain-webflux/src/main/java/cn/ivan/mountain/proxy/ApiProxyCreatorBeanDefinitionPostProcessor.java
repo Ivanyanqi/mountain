@@ -26,7 +26,6 @@ public class ApiProxyCreatorBeanDefinitionPostProcessor implements BeanDefinitio
         AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
         registry.registerBeanDefinition(AnnotationBeanNameGenerator.INSTANCE.generateBeanName(beanDefinition,registry),beanDefinition);
 
-
     }
 
     @Override

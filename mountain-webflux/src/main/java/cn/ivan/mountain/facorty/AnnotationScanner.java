@@ -6,10 +6,8 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.type.AnnotationMetadata;
-import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 
-import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -28,13 +26,8 @@ public class AnnotationScanner extends ClassPathBeanDefinitionScanner {
     }
 
     /**
-     * Register the default filter for {@link Component @Component}.
-     * <p>This will implicitly register all annotations that have the
-     * {@link Component @Component} meta-annotation including the
-     * {@link Repository @Repository}, {@link Service @Service}, and
-     * {@link Controller @Controller} stereotype annotations.
-     * <p>Also supports Java EE 6's {@link javax.annotation.ManagedBean} and
-     * JSR-330's {@link javax.inject.Named} annotations, if available.
+     * Register the default filter for {@link MountainClient @Component}.
+     * {@link MountainClient @Component} meta-annotation including the
      */
     @Override
     protected void registerDefaultFilters() {
@@ -56,6 +49,10 @@ public class AnnotationScanner extends ClassPathBeanDefinitionScanner {
         return super.doScan(basePackages);
     }
 
+    /**
+     *  注册bean 为接口
+     * @param beanDefinition beanDefinition 为接口
+     */
     @Override
     protected boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
         AnnotationMetadata metadata = beanDefinition.getMetadata();
