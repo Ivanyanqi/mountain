@@ -21,6 +21,7 @@
         <spring-webflux.version>5.2.6.RELEASE</spring-webflux.version>
         <mountain.version>1.0.0</mountain.version>
         <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
+        <fastjson.version>1.2.70</fastjson.version>
     </properties>
 
     <dependencyManagement>
@@ -49,6 +50,12 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
             </dependency>
 
             <dependency>

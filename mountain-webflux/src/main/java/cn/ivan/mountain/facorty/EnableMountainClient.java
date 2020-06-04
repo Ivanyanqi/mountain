@@ -1,6 +1,7 @@
 package cn.ivan.mountain.facorty;
 
-import cn.ivan.mountain.proxy.ProxyType;
+import cn.ivan.mountain.proxy.ApiProxyCreator;
+import cn.ivan.mountain.proxy.impl.JdkApiProxyCreator;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 
@@ -17,11 +18,21 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Import(MountainClientScannerRegistrar.class)
 public @interface EnableMountainClient {
+
+    /**
+     *  扫描包
+     */
     @AliasFor("basePackage")
     String [] value() default {};
 
+    /**
+     *  扫描包
+     */
     @AliasFor("value")
     String[] basePackage() default {};
 
-    ProxyType proxyType() default ProxyType.JDK;
+    /**
+     *  创建代理方式
+     */
+    Class<? extends ApiProxyCreator> proxyClass() default JdkApiProxyCreator.class;
 }
