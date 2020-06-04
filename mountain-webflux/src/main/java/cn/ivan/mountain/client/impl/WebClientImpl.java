@@ -3,8 +3,12 @@ package cn.ivan.mountain.client.impl;
 import cn.ivan.mountain.bean.ApiMetadata;
 import cn.ivan.mountain.bean.MethodMetadata;
 import cn.ivan.mountain.client.MountainClient;
+import cn.ivan.mountain.exception.MountainException;
+import cn.ivan.mountain.exception.MountainHttpException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -49,6 +53,9 @@ public class WebClientImpl implements MountainClient {
         } else {
             retrieve = requestBodySpec.retrieve();
         }
+        retrieve.onStatus(HttpStatus::is5xxServerError,this::error)
+                .onStatus(HttpStatus::is4xxClientError,this::error)
+                .onStatus(HttpStatus::isError,this::error);
         Object result;
         if (methodMetadata.isFlux()) {
             result = retrieve.bodyToFlux(methodMetadata.getReturnActualType()).filter(p -> {
@@ -63,5 +70,9 @@ public class WebClientImpl implements MountainClient {
         }
         log.debug("build request success");
         return result;
+    }
+
+    private Mono<MountainHttpException> error(ClientResponse clientResponse){
+        return Mono.error(new MountainHttpException(clientResponse.statusCode(),"error code " + clientResponse.rawStatusCode()));
     }
 }
