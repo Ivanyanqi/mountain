@@ -3,7 +3,6 @@ package cn.ivan.mountain.client.impl;
 import cn.ivan.mountain.bean.ApiMetadata;
 import cn.ivan.mountain.bean.MethodMetadata;
 import cn.ivan.mountain.client.MountainClient;
-import cn.ivan.mountain.exception.MountainException;
 import cn.ivan.mountain.exception.MountainHttpException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +30,7 @@ public class WebClientImpl implements MountainClient {
         log.info("web client init ...");
         this.webClient = WebClient.builder().baseUrl(apiMetadata.getBaseUrl()).filter(((request, next) -> {
             log.info("{} HTTP {} {}", request.logPrefix(), request.method(), request.url());
-            return next.exchange(request);
+           return next.exchange(request);
         })).build();
     }
 
@@ -58,15 +57,9 @@ public class WebClientImpl implements MountainClient {
                 .onStatus(HttpStatus::isError,this::error);
         Object result;
         if (methodMetadata.isFlux()) {
-            result = retrieve.bodyToFlux(methodMetadata.getReturnActualType()).filter(p -> {
-                log.debug("response flux:{}", JSON.toJSONString(p));
-                return true;
-            });
+            result = retrieve.bodyToFlux(methodMetadata.getReturnActualType()).doOnNext(p->log.info("response body : {}", JSON.toJSONString(p)));
         } else {
-            result = retrieve.bodyToMono(methodMetadata.getReturnActualType()).filter(p -> {
-                log.debug("response mono:{}", JSON.toJSONString(p));
-                return true;
-            });
+            result = retrieve.bodyToMono(methodMetadata.getReturnActualType()).doOnNext(p->log.info("response body : {}", JSON.toJSONString(p)));
         }
         log.debug("build request success");
         return result;
