@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ApiConfig {
 
-    @Bean
+    //@Bean
     public MountainClientBuilder mountainClientBuilder(){
         MountainClientBuilder builder = new MountainClientBuilder();
         builder.setMountainClientClass(RestClient.class);
