@@ -3,7 +3,7 @@ package cn.ivan.mountain.proxy.impl;
 import cn.ivan.mountain.bean.ApiMetadata;
 import cn.ivan.mountain.bean.MethodMetadata;
 import cn.ivan.mountain.client.MountainClient;
-import cn.ivan.mountain.client.impl.WebClientImpl;
+import cn.ivan.mountain.client.MountainClientFactory;
 import cn.ivan.mountain.proxy.ApiProxyCreator;
 import cn.ivan.mountain.proxy.MethodMetadataBuilder;
 import cn.ivan.mountain.proxy.MethodMetadataRepository;
@@ -21,7 +21,7 @@ public class CglibApiProxyCreator implements ApiProxyCreator {
 
     @Override
     public Object creator(Class<?> type) {
-        MountainClient client = new WebClientImpl();
+        MountainClient client = MountainClientFactory.getMountainClient();
         cn.ivan.mountain.annotation.MountainClient annotation = type.getAnnotation(cn.ivan.mountain.annotation.MountainClient.class);
         ApiMetadata apiMetadata = ApiMetadata.builder().baseUrl(annotation.value()).build();
         client.init(apiMetadata);

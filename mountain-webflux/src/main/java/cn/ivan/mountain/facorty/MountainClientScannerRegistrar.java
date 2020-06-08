@@ -1,5 +1,6 @@
 package cn.ivan.mountain.facorty;
 
+import cn.ivan.mountain.client.MountainClientFactory;
 import cn.ivan.mountain.proxy.ApiProxyCreator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -58,6 +59,9 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
         // 获取代理类生成实现
         ApiProxyCreator apiProxyCreator = this.apiProxyCreator(annotationAttributes, registry);
 
+        // 获取客户端工程
+        this.defineMountainClient(registry);
+
         // 扫描特定注解 (MountainClient)
         AnnotationScanner scanner = new AnnotationScanner(registry);
         scanner.doScan(basePackages).forEach(beanDefinitionHolder -> {
@@ -96,6 +100,22 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
             apiProxyCreator = beanFactory.getBean(ApiProxyCreator.class);
         }
         return apiProxyCreator;
+    }
+
+
+    private void defineMountainClient(BeanDefinitionRegistry registry) {
+        AbstractBeanDefinition proxyBeanDefinition = BeanDefinitionBuilder.rootBeanDefinition(MountainClientFactory.class).getBeanDefinition();
+        String beanName = AnnotationBeanNameGenerator.INSTANCE.generateBeanName(proxyBeanDefinition, registry);
+        log.debug("init mountainFactory bean {}", beanName);
+        //1. 定义 beanDefinition 由spring进行初始化，并回调
+        registry.registerBeanDefinition(beanName,proxyBeanDefinition);
+        beanFactory.getBean(MountainClientFactory.class);
+
+
+        //2.自己创建对象，并设置 beanFactory
+//        MountainClientFactory mountainClientFactory = new MountainClientFactory();
+//        mountainClientFactory.setBeanFactory(beanFactory);
+//        beanFactory.registerSingleton(beanName,mountainClientFactory);
     }
 
     @Override
