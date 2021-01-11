@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
  * @author yanqi69
  * @date 2020/6/4
  */
-@MountainClient("http://www.baidu.com")
+@MountainClient("${api.test.baidu}")
 public interface BaiduService {
 
     @GetMapping("")

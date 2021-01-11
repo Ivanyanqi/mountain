@@ -10,6 +10,7 @@ import cn.ivan.mountain.proxy.MethodMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.core.env.Environment;
 
 /**
  * @author yanqi
@@ -20,10 +21,10 @@ public class CglibApiProxyCreator implements ApiProxyCreator {
 
 
     @Override
-    public Object creator(Class<?> type) {
+    public Object creator(Class<?> type, Environment environment) {
         MountainClient client = MountainClientFactory.getMountainClient();
         cn.ivan.mountain.annotation.MountainClient annotation = type.getAnnotation(cn.ivan.mountain.annotation.MountainClient.class);
-        ApiMetadata apiMetadata = ApiMetadata.builder().baseUrl(annotation.value()).build();
+        ApiMetadata apiMetadata = ApiMetadata.builder().baseUrl(environment.resolvePlaceholders(annotation.value())).build();
         client.init(apiMetadata);
         log.info("web client init by cglib proxy complete serviceUrl : {} service interface : {}", annotation.value(), type.getName());
         Enhancer enhancer = new Enhancer();

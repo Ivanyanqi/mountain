@@ -12,9 +12,11 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.env.Environment;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 
@@ -26,10 +28,12 @@ import java.util.Objects;
  * @date 2020/6/3
  */
 @Slf4j
-public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegistrar, BeanFactoryAware {
+public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegistrar, BeanFactoryAware, EnvironmentAware {
 
 
     private DefaultListableBeanFactory beanFactory;
+
+    private Environment environment;
 
     /**
      * Register bean definitions as necessary based on the given annotation metadata of
@@ -70,7 +74,7 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
             try {
                 // 为接口生成代理类
                 Class<?> aClass = Class.forName(beanDefinition.getBeanClassName());
-                beanFactory.registerSingleton(beanDefinitionHolder.getBeanName(), apiProxyCreator.creator(aClass));
+                beanFactory.registerSingleton(beanDefinitionHolder.getBeanName(), apiProxyCreator.creator(aClass,environment));
                 log.debug("registerSingleton bean complete : {}", aClass);
             } catch (ClassNotFoundException e) {
                 log.error(e.getMessage(), e);
@@ -121,5 +125,10 @@ public class MountainClientScannerRegistrar implements ImportBeanDefinitionRegis
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = (DefaultListableBeanFactory) beanFactory;
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 }
