@@ -4,6 +4,16 @@
 
 它的目标和 OpenFeign 类似：把远程 HTTP 接口声明成 Java 接口，通过注解描述请求路径、请求方法和参数，运行时自动生成代理对象，并返回响应式类型 `Mono` / `Flux`。
 
+## 当前技术栈
+
+- JDK 21
+- Maven 3.9+
+- Spring Boot 4.0.6
+- Spring Framework 7.0.7
+- Reactor 3.8.x
+
+升级说明见 [docs/upgrade-jdk21-springboot4.md](./docs/upgrade-jdk21-springboot4.md)。
+
 ## 项目特点
 
 - 基于 Spring WebFlux `WebClient`
@@ -21,24 +31,24 @@ mountain
 └── mountain-test      示例工程，演示如何在 Spring Boot 中接入和调用
 ```
 
-## 当前实现机制
+## 工作机制
 
 项目启动时：
 
 1. `@EnableMountainClient` 触发 `MountainClientScannerRegistrar`
 2. 扫描指定包下标注了 `@MountainClient` 的接口
-3. 使用 `JdkApiProxyCreator`（默认）为接口生成动态代理
-4. 解析方法上的 `@GetMapping` / `@PostMapping` 等注解生成请求元数据
-5. 底层通过 `WebClient` 发起 HTTP 请求并返回 `Mono` / `Flux`
+3. 使用 `JdkApiProxyCreator` 默认生成接口动态代理
+4. 解析方法上的 `@GetMapping` / `@PostMapping` 等注解，构建请求元数据
+5. 通过 `WebClientImpl` 发起 HTTP 请求并返回 `Mono` / `Flux`
 
-## 已支持的注解和能力
+## 已支持的注解
 
-### 类级别
+类级别：
 
 - `@MountainClient("http://example.com")`
 - `@MountainClient("${api.test.baidu}")`
 
-### 方法级别
+方法级别：
 
 - `@RequestMapping`
 - `@GetMapping`
@@ -46,23 +56,25 @@ mountain
 - `@PutMapping`
 - `@DeleteMapping`
 
-### 参数级别
+参数级别：
 
 - `@PathVariable`
 - `@RequestParam`
 - `@RequestBody`
 
-## 环境要求
-
-- JDK 8
-- Maven 3.6+
-- Spring Boot 2.3.x / Spring WebFlux 5.2.x
-
 ## 快速开始
 
-### 1. 引入依赖
+### 1. 环境准备
 
-如果你只使用核心模块，可以引入：
+项目当前要求 JDK 21。构建时建议显式指定 `JAVA_HOME`：
+
+```bash
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn test
+```
+
+### 2. 引入依赖
+
+如果只使用核心模块，可以引入：
 
 ```xml
 <dependency>
@@ -72,9 +84,7 @@ mountain
 </dependency>
 ```
 
-### 2. 开启扫描
-
-在 Spring Boot 启动类或配置类上启用：
+### 3. 开启扫描
 
 ```java
 import cn.ivan.mountain.facorty.EnableMountainClient;
@@ -97,7 +107,7 @@ public class MountainTestApplication {
 @EnableMountainClient(basePackage = "cn.ivan.mountain.service")
 ```
 
-### 3. 定义远程服务接口
+### 4. 定义远程服务接口
 
 ```java
 import cn.ivan.mountain.annotation.MountainClient;
@@ -136,7 +146,7 @@ public interface BaiduService {
 api.test.baidu=https://www.baidu.com
 ```
 
-### 4. 在业务代码中直接注入
+### 5. 在业务代码中直接注入
 
 ```java
 import org.springframework.web.bind.annotation.GetMapping;
@@ -159,39 +169,21 @@ public class ApiController {
 }
 ```
 
-## 自定义代理创建方式
-
-`@EnableMountainClient` 提供了 `proxyClass` 参数，默认使用 `JdkApiProxyCreator`：
-
-```java
-@EnableMountainClient(proxyClass = JdkApiProxyCreator.class)
-```
-
-项目中也提供了 `CglibApiProxyCreator` 实现，可以按需替换。
-
-## 自定义底层客户端
-
-默认情况下，框架内部会使用 `WebClientImpl` 发起请求。
-
-如果你想替换默认客户端，可以定义一个 `MountainClient` Bean，或者通过 `MountainClientBuilder` 指定自定义实现。示例工程中的 [ApiConfig.java](./mountain-test/src/main/java/cn/ivan/mountain/config/ApiConfig.java) 给出了相关入口。
-
 ## 运行示例工程
 
-### 启动
-
-在项目根目录执行：
+在项目根目录执行测试：
 
 ```bash
-mvn test
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn test
 ```
 
-或启动示例应用：
+启动示例应用：
 
 ```bash
-mvn -pl mountain-test spring-boot:run
+JAVA_HOME=$(/usr/libexec/java_home -v 21) mvn -pl mountain-test spring-boot:run
 ```
 
-### 可参考的示例接口
+可参考的示例接口：
 
 - `GET /api/say`
 - `GET /api/say/flux`
@@ -205,15 +197,33 @@ mvn -pl mountain-test spring-boot:run
 - [BaiduService.java](./mountain-test/src/main/java/cn/ivan/mountain/service/BaiduService.java)
 - [ApiController.java](./mountain-test/src/main/java/cn/ivan/mountain/api/ApiController.java)
 
+## 自定义扩展点
+
+默认情况下，框架使用 `JdkApiProxyCreator` 生成代理，也可以在 `@EnableMountainClient` 中切换：
+
+```java
+@EnableMountainClient(proxyClass = JdkApiProxyCreator.class)
+```
+
+项目中也提供了 `CglibApiProxyCreator` 实现，可以按需替换。
+
+默认底层客户端为 `WebClientImpl`。如果要替换，可以定义自定义 `MountainClient`，或者通过 `MountainClientBuilder` 指定实现。示例入口见 [ApiConfig.java](./mountain-test/src/main/java/cn/ivan/mountain/config/ApiConfig.java)。
+
+## 升级后验证状态
+
+- 已完成 `JDK 21 + Spring Boot 4.0.6` 升级
+- 根项目 `mvn test` 已验证通过
+- 示例工程可在 Spring Boot 4 下成功启动测试上下文
+
 ## 已知限制
 
 当前版本更适合作为学习和实验项目，主要限制包括：
 
 - 返回值按当前实现应使用 `Mono<T>` 或 `Flux<T>`
-- `@RequestBody` 当前按响应式请求体处理，实际传入对象时需要结合代码实现确认
-- 仅覆盖了基础的请求注解与参数解析场景
-- 错误处理、重试、超时、编解码扩展等能力还比较基础
-- 目前示例依赖外部公开地址，演示结果会受网络环境影响
+- `@RequestBody`、泛型返回值、复杂对象映射能力仍比较基础
+- 错误处理、重试、超时、编解码扩展还比较简单
+- 示例接口依赖外部公开地址，运行结果会受网络环境影响
+- Mockito 在 JDK 21 下存在动态 agent 警告，但当前不影响测试通过
 
 ## 核心源码入口
 
@@ -225,8 +235,8 @@ mvn -pl mountain-test spring-boot:run
 
 ## 后续可改进方向
 
-- 支持请求头、拦截器和统一认证
-- 完善 `@RequestBody` / 泛型返回值 / 集合对象处理
-- 增加超时、重试、熔断和日志追踪能力
-- 增加更完整的单元测试与示例场景
+- 增加请求头、认证、拦截器和统一 tracing 支持
+- 完善 `@RequestBody`、泛型返回值、集合对象处理
+- 增加超时、重试、熔断和更细粒度日志
+- 补齐更多单元测试和本地可重复的示例接口
 - 对齐 OpenFeign 风格的开发体验
