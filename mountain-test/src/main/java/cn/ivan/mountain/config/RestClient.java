@@ -4,8 +4,8 @@ import cn.ivan.mountain.bean.ApiMetadata;
 import cn.ivan.mountain.bean.MethodMetadata;
 import cn.ivan.mountain.client.MountainClient;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import reactor.core.publisher.Mono;
 
 /**
@@ -25,7 +25,8 @@ public class RestClient implements MountainClient {
     @Override
     public void init(ApiMetadata apiMetadata) {
         log.info("rest client init");
-        this.restTemplate = new RestTemplateBuilder().rootUri(apiMetadata.getBaseUrl()).build();
+        this.restTemplate = new RestTemplate();
+        this.restTemplate.setUriTemplateHandler(new DefaultUriBuilderFactory(apiMetadata.getBaseUrl()));
     }
 
     /**

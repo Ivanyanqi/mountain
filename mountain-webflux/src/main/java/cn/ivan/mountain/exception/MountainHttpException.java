@@ -1,7 +1,7 @@
 package cn.ivan.mountain.exception;
 
 import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 
 /**
  * @author yanqi69
@@ -10,9 +10,9 @@ import org.springframework.http.HttpStatus;
 public class MountainHttpException extends MountainException {
 
     @Getter
-    private HttpStatus httpStatus;
+    private HttpStatusCode httpStatus;
 
-    public MountainHttpException(HttpStatus httpStatus, String message){
+    public MountainHttpException(HttpStatusCode httpStatus, String message){
         super(message);
         this.httpStatus = httpStatus;
 

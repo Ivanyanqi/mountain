@@ -126,7 +126,7 @@ public class MethodMetadataBuilder {
                 methodMetadata.setUri(requestMapping.value()[0]);
                 RequestMethod[] requestMethods = (requestMapping).method();
                 if (requestMethods.length > 0) {
-                    methodMetadata.setMethod(HttpMethod.resolve(requestMethods[0].name()));
+                    methodMetadata.setMethod(HttpMethod.valueOf(requestMethods[0].name()));
                 } else {
                     methodMetadata.setMethod(HttpMethod.GET);
                 }
